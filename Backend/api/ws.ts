@@ -1,6 +1,6 @@
 import { WebSocketServer, WebSocket } from "ws";
-import { User } from "../src/models/User";
-import { Message } from "../src/models/Message";
+import { User } from "../src/models/User.js";
+import { Message } from "../src/models/Message.js";
 import mongoose from "mongoose";
 
 let wss: WebSocketServer | null = null;
