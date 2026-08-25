@@ -13,13 +13,6 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
-    message: "Backend is running",
-  });
-});
-
-app.get("/api", (req, res) => {
-  res.status(200).json({
-    success: true,
     message: "Backend API is running",
   });
 });
