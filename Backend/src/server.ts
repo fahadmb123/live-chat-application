@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import { WebSocketServer } from "ws";
 import { Message } from "./models/Message";
 import { connectDB } from "./db/connection";
+import cron from "node-cron";
 
 dotenv.config();
 
@@ -104,6 +105,27 @@ async function startServer() {
   try {
     await connectDB();
 
+    cron.schedule(
+      "0 0 * * *",
+      async () => {
+        try {
+          const result = await Message.deleteMany({});
+
+          console.log(
+            `Cron job: deleted ${result.deletedCount} messages`
+          );
+        } catch (error) {
+          console.error(
+            "Cron job failed to delete messages:",
+            error
+          );
+        }
+      },
+      {
+        timezone: "Asia/Kolkata",
+      }
+    );
+    
     const server = app.listen(PORT, () => {
       console.log(`HTTP server running on http://localhost:${PORT}`);
     });
