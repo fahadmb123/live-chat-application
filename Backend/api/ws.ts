@@ -15,9 +15,13 @@ async function connectDB() {
 
 function getWebSocketServer() {
   if (!wss) {
-    wss = new WebSocketServer({ noServer: true });
+    wss = new WebSocketServer({
+      noServer: true,
+    });
 
     wss.on("connection", (socket) => {
+      console.log("New WebSocket connection");
+
       let userId: string | null = null;
       let username: string | null = null;
 
@@ -55,6 +59,7 @@ function getWebSocketServer() {
                   message: "Username is required",
                 })
               );
+
               return;
             }
 
@@ -69,6 +74,7 @@ function getWebSocketServer() {
                   message: "Username already taken",
                 })
               );
+
               return;
             }
 
@@ -93,11 +99,15 @@ function getWebSocketServer() {
           }
 
           if (data.type === "message") {
-            if (!userId || !username) return;
+            if (!userId || !username) {
+              return;
+            }
 
             const messageText = data.message.trim();
 
-            if (!messageText) return;
+            if (!messageText) {
+              return;
+            }
 
             const newMessage = await Message.create({
               userId,
@@ -119,6 +129,8 @@ function getWebSocketServer() {
       });
 
       socket.on("close", async () => {
+        console.log(`${username ?? "Unknown user"} disconnected`);
+
         if (userId) {
           await User.findByIdAndDelete(userId);
           await broadcastUsers();
@@ -131,7 +143,9 @@ function getWebSocketServer() {
 }
 
 function broadcast(data: object) {
-  if (!wss) return;
+  if (!wss) {
+    return;
+  }
 
   const message = JSON.stringify(data);
 
@@ -176,13 +190,15 @@ export default async function handler(req: any, res: any) {
     }
 
     res.status(200).json({
-      message: "WebSocket server is running",
+      success: true,
+      message: "WebSocket endpoint is running",
     });
   } catch (error) {
     console.error("WebSocket server error:", error);
 
     res.status(500).json({
-      message: "Internal server error",
+      success: false,
+      message: "WebSocket server error",
     });
   }
 }
