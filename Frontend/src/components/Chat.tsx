@@ -69,8 +69,9 @@ function Chat({
           <h1>Live Chat</h1>
 
           <p>
-            You are chatting as{" "}
+            You are chatting as{" "} 
             <strong>{username}</strong>
+            .       .........   .  In every 24 Hr we will clear the Messages
           </p>
         </div>
 
