@@ -1,9 +1,10 @@
+import React from "react";
+
 
 export type JoinChatProps = {
   onJoin: (username: string) => void;
   error: string;
 }
-
 
 
 export type User = {
@@ -19,7 +20,7 @@ export type Message = {
 };
 
 export type ChatProps = {
-  socket: WebSocket | null;
+  socket:React.RefObject<WebSocket | null>;
   username: string;
   users: User[];
   messages: Message[];

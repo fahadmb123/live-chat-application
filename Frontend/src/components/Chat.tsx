@@ -12,11 +12,11 @@ function Chat({
   messages,
 }: ChatProps) {
   const sendMessage = (message: string) => {
-    if (!socket || !message.trim()) {
+    if (!socket.current || !message.trim()) {
       return;
     }
 
-    socket.send(
+    socket.current.send(
       JSON.stringify({
         type: "message",
         message: message.trim(),

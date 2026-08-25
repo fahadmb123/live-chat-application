@@ -1,83 +1,95 @@
 import { useEffect, useRef, useState } from "react";
-import type { Message } from "./types/app.type";
+import type { User,Message } from "./types/app.type";
+import JoinChat from "./components/JoinChat";
+import Chat from "./components/Chat";
 import "./App.css";
 
 
-
-
-
-
 function App() {
-    const socket  = useRef<WebSocket | null>(null)
-    const [message, setMessage] = useState("")
-    const [messages, setMessages] = useState<string[]>([])
+  const socket = useRef<WebSocket | null>(null);
 
+  const [username, setUsername] = useState<string | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [error, setError] = useState("");
 
+  useEffect(() => {
+    const newSocket = new WebSocket("ws://localhost:8080");
 
-    useEffect(() => {
-      const newSocket = new WebSocket("ws://localhost:8080")
-      socket.current = newSocket
-      newSocket.addEventListener("open", () => {
-        console.log("Connected to chat server")
-      })
-      newSocket.addEventListener("message", (event) => {
-        const data: Message = JSON.parse(event.data)
+    socket.current = newSocket;
+
+    newSocket.addEventListener("open", () => {
+      console.log("Connected to WebSocket server");
+    });
+
+    newSocket.addEventListener("message", (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.type === "joined") {
+        setUsername(data.username);
+        setError("")
+      }
+
+      if (data.type === "error") {
+        setError(data.message)
+      }
+
+      if (data.type === "users") {
+        setUsers(data.users)
+      }
+
+      if (data.type === "message") {
         setMessages((previousMessages) => [
           ...previousMessages,
-          data.message,
-        ])
-      })
-      newSocket.addEventListener("close", () => {
-        console.log("Disconnected")
-      })
-    
-      return () => {
-        newSocket.close()
+          {
+            userId: data.userId,
+            username: data.username,
+            message: data.message,
+            createdAt: data.createdAt,
+          },
+        ]);
       }
-    }, [])
+    });
 
+    newSocket.addEventListener("close", () => {
+      console.log("Disconnected from WebSocket server");
+    });
 
+    return () => {
+      newSocket.close();
+    };
+  }, []);
 
-
-    const sendMessage = () => {
-      if (!socket || !message.trim()) {
-        return
-      }
-      socket.current?.send(
-        JSON.stringify({
-          message,
-        })
-      )
-      setMessage("");
+  const joinChat = (name: string) => {
+    if (!socket.current) {
+      return;
     }
 
+    socket.current.send(
+      JSON.stringify({
+        type: "join",
+        username: name,
+      })
+    );
+  };
 
+  if (!username) {
     return (
-      <div className="chat">
-        <h1>Real-Time Chat</h1>
+      <JoinChat
+        onJoin={joinChat}
+        error={error}
+      />
+    );
+  }
 
-        <div className="messages">
-          {messages.map((message, index) => (
-            <div className="message" key={index}>
-              {message}
-            </div>
-          ))}
-        </div>
-
-        <div className="input-area">
-          <input
-            type="text"
-            value={message}
-            onChange={(event) => setMessage(event.target.value)}
-            placeholder="Type a message..."
-          />
-
-          <button onClick={sendMessage}>
-            Send
-          </button>
-        </div>
-      </div>
-    )
+  return (
+    <Chat
+      socket={socket}
+      username={username}
+      users={users}
+      messages={messages}
+    />
+  );
 }
 
 export default App;
