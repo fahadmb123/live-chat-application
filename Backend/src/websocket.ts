@@ -4,6 +4,7 @@ import { WebSocketServer } from "ws";
 const wss = new WebSocketServer({
     port : 8080
 })
+console.log("The WebSocket is running on the PORT"+8000)
 
 wss.on("connection",(socket)=>{
     console.log("User Connected")
