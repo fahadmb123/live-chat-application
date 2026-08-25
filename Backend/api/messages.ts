@@ -1,7 +1,10 @@
 import { connectDB } from "../src/db/connection";
 import { Message } from "../src/models/Message";
 
-export default async function handler(req: any, res: any) {
+export default async function handler(
+  req: any,
+  res: any
+) {
   try {
     await connectDB();
 
@@ -17,12 +20,17 @@ export default async function handler(req: any, res: any) {
     }
 
     if (req.method === "POST") {
-      const { userId, username, message } = req.body;
+      const {
+        userId,
+        username,
+        message,
+      } = req.body;
 
       if (!userId || !username || !message) {
         return res.status(400).json({
           success: false,
-          message: "userId, username and message are required",
+          message:
+            "userId, username and message are required",
         });
       }
 
