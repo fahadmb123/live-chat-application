@@ -28,3 +28,6 @@ wss.on("connection",(socket)=>{
         console.log("User Disconnected")
     })
 })
+
+
+export {wss}

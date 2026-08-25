@@ -1,1 +1,2 @@
-import express from "express"
+import "./websocket"
+console.log("Backend is Running")
