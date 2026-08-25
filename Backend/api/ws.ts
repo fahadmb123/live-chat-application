@@ -11,19 +11,13 @@ async function connectDB() {
   }
 
   await mongoose.connect(process.env.MONGO_URI!);
-
-  console.log("MongoDB connected");
 }
 
 function getWebSocketServer() {
   if (!wss) {
-    wss = new WebSocketServer({
-      noServer: true,
-    });
+    wss = new WebSocketServer({ noServer: true });
 
     wss.on("connection", (socket) => {
-      console.log("New WebSocket connection");
-
       let userId: string | null = null;
       let username: string | null = null;
 
@@ -31,7 +25,6 @@ function getWebSocketServer() {
         try {
           const data = JSON.parse(rawMessage.toString());
 
-       
           if (data.type === "get_messages") {
             const messages = await Message.find()
               .sort({ createdAt: 1 })
@@ -52,7 +45,6 @@ function getWebSocketServer() {
             return;
           }
 
-          
           if (data.type === "join") {
             const enteredUsername = data.username.trim();
 
@@ -63,7 +55,6 @@ function getWebSocketServer() {
                   message: "Username is required",
                 })
               );
-
               return;
             }
 
@@ -78,7 +69,6 @@ function getWebSocketServer() {
                   message: "Username already taken",
                 })
               );
-
               return;
             }
 
@@ -99,21 +89,15 @@ function getWebSocketServer() {
 
             await broadcastUsers();
 
-            console.log(`${username} joined the chat`);
-
             return;
           }
 
           if (data.type === "message") {
-            if (!userId || !username) {
-              return;
-            }
+            if (!userId || !username) return;
 
             const messageText = data.message.trim();
 
-            if (!messageText) {
-              return;
-            }
+            if (!messageText) return;
 
             const newMessage = await Message.create({
               userId,
@@ -135,11 +119,8 @@ function getWebSocketServer() {
       });
 
       socket.on("close", async () => {
-        console.log(`${username ?? "Unknown user"} disconnected`);
-
         if (userId) {
           await User.findByIdAndDelete(userId);
-
           await broadcastUsers();
         }
       });
@@ -150,11 +131,9 @@ function getWebSocketServer() {
 }
 
 function broadcast(data: object) {
-  const message = JSON.stringify(data);
+  if (!wss) return;
 
-  if (!wss) {
-    return;
-  }
+  const message = JSON.stringify(data);
 
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
@@ -183,16 +162,13 @@ export default async function handler(req: any, res: any) {
 
     const wsServer = getWebSocketServer();
 
-   
     if (req.headers.upgrade?.toLowerCase() === "websocket") {
-      const socket = req.socket;
-
       wsServer.handleUpgrade(
         req,
-        socket,
+        req.socket,
         Buffer.alloc(0),
-        (ws) => {
-          wsServer.emit("connection", ws, req);
+        (socket) => {
+          wsServer.emit("connection", socket, req);
         }
       );
 
