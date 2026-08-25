@@ -28,3 +28,11 @@ export type ChatProps = {
 export type OnlineUsersProps = {
   users: User[];
 }
+
+
+
+export type MessageListProps = {
+  messages: Message[];
+  username: string;
+  onSend: (message: string) => void;
+}
