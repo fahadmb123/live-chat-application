@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import type { User,Message } from "./types/app.type";
+import type { User, Message } from "./types/app.type";
 import JoinChat from "./components/JoinChat";
 import Chat from "./components/Chat";
 import "./App.css";
-
 
 function App() {
   const socket = useRef<WebSocket | null>(null);
@@ -20,6 +19,13 @@ function App() {
 
     newSocket.addEventListener("open", () => {
       console.log("Connected to WebSocket server");
+
+   
+      newSocket.send(
+        JSON.stringify({
+          type: "get_messages",
+        })
+      );
     });
 
     newSocket.addEventListener("message", (event) => {
@@ -27,17 +33,17 @@ function App() {
 
       if (data.type === "joined") {
         setUsername(data.username);
-        setError("")
+        setError("");
       }
-
       if (data.type === "error") {
-        setError(data.message)
+        setError(data.message);
       }
-
       if (data.type === "users") {
-        setUsers(data.users)
+        setUsers(data.users);
       }
-
+      if (data.type === "messages") {
+        setMessages(data.messages);
+      }
       if (data.type === "message") {
         setMessages((previousMessages) => [
           ...previousMessages,
@@ -73,6 +79,7 @@ function App() {
     );
   };
 
+  
   if (!username) {
     return (
       <JoinChat
@@ -82,6 +89,7 @@ function App() {
     );
   }
 
+  
   return (
     <Chat
       socket={socket}

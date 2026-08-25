@@ -17,8 +17,23 @@ wss.on("connection", (socket) => {
   socket.on("message", async (rawMessage) => {
     try {
       const data = JSON.parse(rawMessage.toString());
-
-      
+      if (data.type === "get_messages") {
+        const messages = await Message.find()
+          .sort({ createdAt: 1 })
+          .lean();
+        socket.send(
+          JSON.stringify({
+            type: "messages",
+            messages: messages.map((message) => ({
+              userId: message.userId.toString(),
+              username: message.username,
+              message: message.message,
+              createdAt: message.createdAt,
+            })),
+          })
+        )
+        return
+      }
       if (data.type === "join") {
         const enteredUsername = data.username.trim();
 
@@ -28,9 +43,9 @@ wss.on("connection", (socket) => {
               type: "error",
               message: "Username is required",
             })
-          )
+          );
 
-          return
+          return;
         }
 
         const existingUser = await User.findOne({
@@ -50,7 +65,7 @@ wss.on("connection", (socket) => {
 
         const user = await User.create({
           username: enteredUsername,
-        })
+        });
 
         userId = user._id.toString()
         username = user.username
@@ -68,13 +83,12 @@ wss.on("connection", (socket) => {
         console.log(`${username} joined the chat`)
       }
 
-      
       if (data.type === "message") {
         if (!userId || !username) {
           return;
         }
 
-        const messageText = data.message.trim()
+        const messageText = data.message.trim();
 
         if (!messageText) {
           return;
@@ -92,39 +106,42 @@ wss.on("connection", (socket) => {
           username,
           message: newMessage.message,
           createdAt: newMessage.createdAt,
-        })
+        });
       }
     } catch (error) {
-      console.error("WebSocket message error:", error)
+      console.error("WebSocket message error:", error);
     }
-  });
+  })
 
-  
+
+
   socket.on("close", async () => {
-    console.log(`${username ?? "Unknown user"} disconnected`)
+    console.log(`${username ?? "Unknown user"} disconnected`);
 
     if (userId) {
       await User.findByIdAndDelete(userId)
 
       await broadcastUsers()
     }
-  });
-});
+  })
+})
 
 function broadcast(data: object) {
   const message = JSON.stringify(data)
 
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
-      client.send(message)
+      client.send(message);
     }
   });
 }
 
+
+
 async function broadcastUsers() {
   const users = await User.find()
     .select("_id username")
-    .lean()
+    .lean();
 
   broadcast({
     type: "users",
@@ -132,5 +149,5 @@ async function broadcastUsers() {
       userId: user._id.toString(),
       username: user.username,
     })),
-  });
+  })
 }

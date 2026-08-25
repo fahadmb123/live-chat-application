@@ -2,28 +2,68 @@
   box-sizing: border-box;
 }
 
+:root {
+  --bg-color: #f5f7fb;
+  --card-color: #ffffff;
+  --text-color: #1f2937;
+  --secondary-text: #6b7280;
+  --border-color: #e5e7eb;
+  --input-border: #d1d5db;
+  --message-other: #f1f5f9;
+  --primary-color: #2563eb;
+  --primary-hover: #1d4ed8;
+  --online-color: #22c55e;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f5f7fb;
-  color: #1f2937;
+  background: var(--bg-color);
+  color: var(--text-color);
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
 
-/* JOIN PAGE */
+/* =========================
+   DARK THEME
+========================= */
+
+body.dark {
+  --bg-color: #111827;
+  --card-color: #1f2937;
+  --text-color: #f9fafb;
+  --secondary-text: #9ca3af;
+  --border-color: #374151;
+  --input-border: #4b5563;
+  --message-other: #374151;
+  --primary-color: #3b82f6;
+  --primary-hover: #2563eb;
+  --online-color: #22c55e;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* =========================
+   JOIN PAGE
+========================= */
 
 .join-page {
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 20px;
 }
 
 .join-card {
   width: 380px;
-  background: white;
+  max-width: 100%;
+  background: var(--card-color);
   padding: 40px;
   border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow);
+  transition: background-color 0.3s ease;
 }
 
 .join-card h1 {
@@ -31,7 +71,7 @@ body {
 }
 
 .join-card p {
-  color: #6b7280;
+  color: var(--secondary-text);
 }
 
 .join-card form {
@@ -41,10 +81,20 @@ body {
 .join-card input {
   width: 100%;
   padding: 13px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--input-border);
   border-radius: 8px;
   font-size: 15px;
   outline: none;
+  background: var(--card-color);
+  color: var(--text-color);
+}
+
+.join-card input::placeholder {
+  color: var(--secondary-text);
+}
+
+.join-card input:focus {
+  border-color: var(--primary-color);
 }
 
 .join-card button {
@@ -53,14 +103,15 @@ body {
   padding: 13px;
   border: none;
   border-radius: 8px;
-  background: #2563eb;
+  background: var(--primary-color);
   color: white;
   font-size: 15px;
   cursor: pointer;
+  transition: background 0.2s ease;
 }
 
 .join-card button:hover {
-  background: #1d4ed8;
+  background: var(--primary-hover);
 }
 
 .error {
@@ -68,7 +119,9 @@ body {
   margin-top: 15px;
 }
 
-/* CHAT PAGE */
+/* =========================
+   CHAT PAGE
+========================= */
 
 .chat-page {
   min-height: 100vh;
@@ -81,6 +134,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 20px;
 }
 
 .chat-header h1 {
@@ -88,17 +142,20 @@ body {
 }
 
 .chat-header p {
-  color: #6b7280;
+  color: var(--secondary-text);
 }
 
 .online-count {
-  background: white;
+  background: var(--card-color);
   padding: 10px 15px;
   border-radius: 8px;
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+  white-space: nowrap;
 }
 
-/* CHAT CONTAINER */
+/* =========================
+   CHAT CONTAINER
+========================= */
 
 .chat-container {
   max-width: 1100px;
@@ -106,17 +163,20 @@ body {
   margin: auto;
   display: grid;
   grid-template-columns: 240px 1fr;
-  background: white;
+  background: var(--card-color);
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow);
 }
 
-/* USERS */
+/* =========================
+   USERS
+========================= */
 
 .users-panel {
   padding: 20px;
-  border-right: 1px solid #e5e7eb;
+  border-right: 1px solid var(--border-color);
+  overflow-y: auto;
 }
 
 .users-panel h2 {
@@ -134,15 +194,19 @@ body {
 .status-dot {
   width: 9px;
   height: 9px;
-  background: #22c55e;
+  background: var(--online-color);
   border-radius: 50%;
+  flex-shrink: 0;
 }
 
-/* MESSAGES */
+/* =========================
+   MESSAGES
+========================= */
 
 .messages-panel {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .messages {
@@ -153,7 +217,7 @@ body {
 
 .empty-message {
   text-align: center;
-  color: #9ca3af;
+  color: var(--secondary-text);
   margin-top: 250px;
 }
 
@@ -162,16 +226,19 @@ body {
   margin-bottom: 15px;
   padding: 10px 14px;
   border-radius: 12px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .my-message {
   margin-left: auto;
-  background: #2563eb;
+  background: var(--primary-color);
   color: white;
 }
 
 .other-message {
-  background: #f1f5f9;
+  background: var(--message-other);
+  color: var(--text-color);
 }
 
 .message-username {
@@ -185,28 +252,185 @@ body {
   font-size: 15px;
 }
 
-/* INPUT */
+/* =========================
+   INPUT
+========================= */
 
 .message-input {
   display: flex;
   gap: 10px;
   padding: 15px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--border-color);
 }
 
 .message-input input {
   flex: 1;
+  min-width: 0;
   padding: 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--input-border);
   border-radius: 8px;
   outline: none;
+  background: var(--card-color);
+  color: var(--text-color);
+}
+
+.message-input input::placeholder {
+  color: var(--secondary-text);
+}
+
+.message-input input:focus {
+  border-color: var(--primary-color);
 }
 
 .message-input button {
   padding: 12px 20px;
   border: none;
   border-radius: 8px;
-  background: #2563eb;
+  background: var(--primary-color);
   color: white;
   cursor: pointer;
+  flex-shrink: 0;
+}
+
+.message-input button:hover {
+  background: var(--primary-hover);
+}
+
+/* =========================
+   TABLET
+========================= */
+
+@media (max-width: 768px) {
+  .chat-page {
+    padding: 20px;
+  }
+
+  .chat-container {
+    grid-template-columns: 180px 1fr;
+    height: calc(100vh - 160px);
+    min-height: 500px;
+  }
+
+  .users-panel {
+    padding: 15px;
+  }
+
+  .messages {
+    padding: 20px;
+  }
+
+  .message {
+    max-width: 80%;
+  }
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 600px) {
+  .chat-page {
+    padding: 12px;
+  }
+
+  .chat-header {
+    align-items: flex-start;
+    margin-bottom: 12px;
+  }
+
+  .chat-header h1 {
+    font-size: 22px;
+  }
+
+  .chat-header p {
+    font-size: 13px;
+  }
+
+  .online-count {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .chat-container {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    height: calc(100vh - 120px);
+    min-height: 450px;
+    border-radius: 12px;
+  }
+
+  /* Users become horizontal on mobile */
+
+  .users-panel {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 10px 15px;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .users-panel h2 {
+    margin: 0;
+    font-size: 14px;
+  }
+
+  .user {
+    padding: 5px 0;
+  }
+
+  .messages {
+    padding: 15px;
+  }
+
+  .message {
+    max-width: 85%;
+    padding: 9px 12px;
+  }
+
+  .message-text {
+    font-size: 14px;
+  }
+
+  .message-input {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .message-input input {
+    padding: 10px;
+  }
+
+  .message-input button {
+    padding: 10px 14px;
+  }
+}
+
+/* =========================
+   SMALL MOBILE
+========================= */
+
+@media (max-width: 400px) {
+  .chat-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .online-count {
+    align-self: flex-start;
+  }
+
+  .join-card {
+    padding: 25px;
+  }
+
+  .message {
+    max-width: 90%;
+  }
+
+  .message-input button {
+    padding: 10px 12px;
+  }
 }
