@@ -1,5 +1,5 @@
-import React from "react";
-
+//import React from "react";
+import type { RealtimeChannel } from "ably";
 
 export type JoinChatProps = {
   onJoin: (username: string) => void;
@@ -20,11 +20,11 @@ export type Message = {
 };
 
 export type ChatProps = {
-  socket:React.RefObject<WebSocket | null>;
+  channel: RealtimeChannel;
   username: string;
   users: User[];
   messages: Message[];
-}
+};
 
 export type OnlineUsersProps = {
   users: User[];

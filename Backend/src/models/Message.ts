@@ -1,26 +1,34 @@
-import mongoose from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
 
-const messageSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
+export interface IMessage extends Document {
+  userId: string;
+  username: string;
+  message: string;
+  createdAt: Date;
+}
+
+const messageSchema = new Schema<IMessage>(
+  {
+    userId: {
+      type: String,
+      required: true,
+    },
+
+    username: {
+      type: String,
+      required: true,
+    },
+
+    message: {
+      type: String,
+      required: true,
+    },
   },
+  {
+    timestamps: true,
+  }
+);
 
-  username: {
-    type: String,
-    required: true,
-  },
-
-  message: {
-    type: String,
-    required: true,
-  },
-
-  createdAt: {
-    type: Date,
-    default: Date.now,
-    expires: 86400,
-  },
-});
-
-export const Message = mongoose.model("Message", messageSchema);
+export const Message =
+  mongoose.models.Message ||
+  mongoose.model<IMessage>("Message", messageSchema);

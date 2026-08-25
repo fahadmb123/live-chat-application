@@ -1,85 +1,126 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { User, Message } from "./types/app.type";
 import JoinChat from "./components/JoinChat";
 import Chat from "./components/Chat";
+import { chatChannel } from "./services/ably";
+import type { Message as AblyMessage } from "ably";
 import "./App.css";
 
-function App() {
-  const socket = useRef<WebSocket | null>(null);
+type RealtimeMessage = {
+  userId: string;
+  username: string;
+  message: string;
+  createdAt: string;
+};
 
+type MessagesResponse = {
+  success: boolean;
+  messages: Message[];
+  message?: string;
+};
+
+function App() {
   const [username, setUsername] = useState<string | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const newSocket = new WebSocket(import.meta.env.VITE_WS_URL);
+    const loadMessages = async () => {
+      try {
+        const response = await fetch("/api/messages");
 
-    socket.current = newSocket;
+        const data: MessagesResponse = await response.json();
 
-    newSocket.addEventListener("open", () => {
-      console.log("Connected to WebSocket server");
+        if (!response.ok || !data.success) {
+          setError(data.message ?? "Failed to load messages");
+          return;
+        }
 
-   
-      newSocket.send(
-        JSON.stringify({
-          type: "get_messages",
-        })
-      );
-    });
-
-    newSocket.addEventListener("message", (event) => {
-      const data = JSON.parse(event.data);
-
-      if (data.type === "joined") {
-        setUsername(data.username);
-        setError("");
-      }
-      if (data.type === "error") {
-        setError(data.message);
-      }
-      if (data.type === "users") {
-        setUsers(data.users);
-      }
-      if (data.type === "messages") {
         setMessages(data.messages);
+      } catch (error) {
+        console.error("Failed to load messages:", error);
+        setError("Failed to load messages");
       }
-      if (data.type === "message") {
-        setMessages((previousMessages) => [
-          ...previousMessages,
-          {
-            userId: data.userId,
-            username: data.username,
-            message: data.message,
-            createdAt: data.createdAt,
-          },
-        ]);
-      }
-    });
+    };
 
-    newSocket.addEventListener("close", () => {
-      console.log("Disconnected from WebSocket server");
-    });
+    loadMessages();
+  }, []);
+
+ 
+  useEffect(() => {
+    const handleMessage = (event: AblyMessage) => {
+      if (!event.data) {
+        return;
+      }
+
+      const data = event.data as RealtimeMessage;
+
+      const newMessage: Message = {
+        userId: data.userId,
+        username: data.username,
+        message: data.message,
+        createdAt: data.createdAt,
+      };
+
+      setMessages((previousMessages) => [
+        ...previousMessages,
+        newMessage,
+      ]);
+    };
+
+    chatChannel.subscribe("message", handleMessage);
 
     return () => {
-      newSocket.close();
+      chatChannel.unsubscribe("message", handleMessage);
     };
   }, []);
 
-  const joinChat = (name: string) => {
-    if (!socket.current) {
+ 
+  const joinChat = async (name: string) => {
+    const trimmedName = name.trim();
+
+    if (!trimmedName) {
+      setError("Username is required");
       return;
     }
 
-    socket.current.send(
-      JSON.stringify({
-        type: "join",
-        username: name,
-      })
-    );
+    try {
+      setError("");
+
+     
+      const user: User = {
+        userId: trimmedName,
+        username: trimmedName,
+      };
+
+      setUsername(trimmedName);
+
+      setUsers((previousUsers) => {
+        const alreadyExists = previousUsers.some(
+          (existingUser) =>
+            existingUser.username === trimmedName
+        );
+
+        if (alreadyExists) {
+          return previousUsers;
+        }
+
+        return [...previousUsers, user];
+      });
+
+      
+      await chatChannel.publish("user_joined", {
+        userId: trimmedName,
+        username: trimmedName,
+      });
+    } catch (error) {
+      console.error("Failed to join chat:", error);
+      setError("Unable to join chat");
+    }
   };
 
-  
+ 
   if (!username) {
     return (
       <JoinChat
@@ -92,10 +133,10 @@ function App() {
   
   return (
     <Chat
-      socket={socket}
       username={username}
       users={users}
       messages={messages}
+      channel={chatChannel}
     />
   );
 }

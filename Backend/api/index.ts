@@ -1,8 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
 import { connectDB } from "../src/db/connection";
-import cron from "node-cron";
-import { Message } from "../src/models/Message";
 
 dotenv.config();
 
@@ -10,27 +8,39 @@ const app = express();
 
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "Backend API is running",
-  });
+app.get("/", async (req, res) => {
+  try {
+    await connectDB();
+
+    res.status(200).json({
+      success: true,
+      message: "Backend is running",
+    });
+  } catch (error) {
+    console.error("Backend error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Backend error",
+    });
+  }
 });
 
-connectDB()
-  .then(() => {
-    console.log("MongoDB connected");
-  })
-  .catch((error) => {
-    console.error("MongoDB connection error:", error);
-  });
-
-cron.schedule("0 0 * * *", async () => {
+app.get("/api", async (req, res) => {
   try {
-    await Message.deleteMany({});
-    console.log("Messages cleared for the new day");
+    await connectDB();
+
+    res.status(200).json({
+      success: true,
+      message: "Backend API is running",
+    });
   } catch (error) {
-    console.error("Error clearing messages:", error);
+    console.error("Backend error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Backend error",
+    });
   }
 });
 
