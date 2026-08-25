@@ -1,5 +1,5 @@
 import { WebSocketServer, WebSocket } from "ws";
-import { User } from "./models/user";
+import { User } from "./models/User";
 import { Message } from "./models/Message";
 
 const wss = new WebSocketServer({
