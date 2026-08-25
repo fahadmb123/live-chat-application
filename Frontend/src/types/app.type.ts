@@ -23,4 +23,8 @@ export type ChatProps = {
   username: string;
   users: User[];
   messages: Message[];
-};
+}
+
+export type OnlineUsersProps = {
+  users: User[];
+}
