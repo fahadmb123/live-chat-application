@@ -16,8 +16,20 @@
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
 }
 
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+}
+
+html {
+  height: 100%;
+}
+
 body {
   margin: 0;
+  min-height: 100vh;
   font-family: Arial, sans-serif;
   background: var(--bg-color);
   color: var(--text-color);
@@ -63,7 +75,6 @@ body.dark {
   padding: 40px;
   border-radius: 16px;
   box-shadow: var(--shadow);
-  transition: background-color 0.3s ease;
 }
 
 .join-card h1 {
@@ -125,16 +136,22 @@ body.dark {
 
 .chat-page {
   min-height: 100vh;
+  height: 100vh;
   padding: 30px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .chat-header {
+  width: 100%;
   max-width: 1100px;
   margin: 0 auto 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 20px;
+  flex-shrink: 0;
 }
 
 .chat-header h1 {
@@ -142,6 +159,7 @@ body.dark {
 }
 
 .chat-header p {
+  margin-bottom: 0;
   color: var(--secondary-text);
 }
 
@@ -158,11 +176,13 @@ body.dark {
 ========================= */
 
 .chat-container {
+  width: 100%;
   max-width: 1100px;
-  height: 650px;
-  margin: auto;
+  flex: 1;
+  min-height: 0;
+  margin: 0 auto;
   display: grid;
-  grid-template-columns: 240px 1fr;
+  grid-template-columns: 240px minmax(0, 1fr);
   background: var(--card-color);
   border-radius: 16px;
   overflow: hidden;
@@ -177,6 +197,7 @@ body.dark {
   padding: 20px;
   border-right: 1px solid var(--border-color);
   overflow-y: auto;
+  min-height: 0;
 }
 
 .users-panel h2 {
@@ -200,34 +221,73 @@ body.dark {
 }
 
 /* =========================
-   MESSAGES
+   MESSAGES PANEL
 ========================= */
 
 .messages-panel {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
+  height: 100%;
 }
+
+/* =========================
+   MESSAGES
+========================= */
 
 .messages {
   flex: 1;
+  min-height: 0;
   padding: 25px;
   overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+/* Scrollbar */
+
+.messages::-webkit-scrollbar,
+.users-panel::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.messages::-webkit-scrollbar-track,
+.users-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.messages::-webkit-scrollbar-thumb,
+.users-panel::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 10px;
+}
+
+.messages::-webkit-scrollbar-thumb:hover,
+.users-panel::-webkit-scrollbar-thumb:hover {
+  background: var(--input-border);
 }
 
 .empty-message {
   text-align: center;
   color: var(--secondary-text);
-  margin-top: 250px;
+  margin-top: 100px;
 }
+
+/* =========================
+   MESSAGE
+========================= */
 
 .message {
   max-width: 65%;
+  width: fit-content;
   margin-bottom: 15px;
   padding: 10px 14px;
   border-radius: 12px;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .my-message {
@@ -237,6 +297,7 @@ body.dark {
 }
 
 .other-message {
+  margin-right: auto;
   background: var(--message-other);
   color: var(--text-color);
 }
@@ -250,6 +311,7 @@ body.dark {
 
 .message-text {
   font-size: 15px;
+  line-height: 1.4;
 }
 
 /* =========================
@@ -261,6 +323,8 @@ body.dark {
   gap: 10px;
   padding: 15px;
   border-top: 1px solid var(--border-color);
+  flex-shrink: 0;
+  background: var(--card-color);
 }
 
 .message-input input {
@@ -272,6 +336,7 @@ body.dark {
   outline: none;
   background: var(--card-color);
   color: var(--text-color);
+  font-size: 15px;
 }
 
 .message-input input::placeholder {
@@ -290,6 +355,7 @@ body.dark {
   color: white;
   cursor: pointer;
   flex-shrink: 0;
+  transition: background 0.2s ease;
 }
 
 .message-input button:hover {
@@ -306,9 +372,7 @@ body.dark {
   }
 
   .chat-container {
-    grid-template-columns: 180px 1fr;
-    height: calc(100vh - 160px);
-    min-height: 500px;
+    grid-template-columns: 180px minmax(0, 1fr);
   }
 
   .users-panel {
@@ -330,6 +394,8 @@ body.dark {
 
 @media (max-width: 600px) {
   .chat-page {
+    height: 100dvh;
+    min-height: 100dvh;
     padding: 12px;
   }
 
@@ -353,9 +419,8 @@ body.dark {
 
   .chat-container {
     grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
-    height: calc(100vh - 120px);
-    min-height: 450px;
+    grid-template-rows: auto minmax(0, 1fr);
+    min-height: 0;
     border-radius: 12px;
   }
 
@@ -369,20 +434,29 @@ body.dark {
     border-right: none;
     border-bottom: 1px solid var(--border-color);
     overflow-x: auto;
+    overflow-y: hidden;
     white-space: nowrap;
+    min-height: 55px;
   }
 
   .users-panel h2 {
     margin: 0;
     font-size: 14px;
+    flex-shrink: 0;
   }
 
   .user {
     padding: 5px 0;
+    flex-shrink: 0;
+  }
+
+  .messages-panel {
+    min-height: 0;
   }
 
   .messages {
     padding: 15px;
+    min-height: 0;
   }
 
   .message {
@@ -401,6 +475,7 @@ body.dark {
 
   .message-input input {
     padding: 10px;
+    font-size: 14px;
   }
 
   .message-input button {
@@ -432,5 +507,35 @@ body.dark {
 
   .message-input button {
     padding: 10px 12px;
+  }
+}
+
+/* =========================
+   VERY SMALL HEIGHT
+========================= */
+
+@media (max-height: 600px) {
+  .chat-page {
+    padding: 10px;
+  }
+
+  .chat-header {
+    margin-bottom: 10px;
+  }
+
+  .chat-header h1 {
+    font-size: 20px;
+  }
+
+  .chat-header p {
+    margin: 5px 0 0;
+  }
+
+  .messages {
+    padding: 12px;
+  }
+
+  .message {
+    margin-bottom: 10px;
   }
 }
