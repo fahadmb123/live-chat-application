@@ -8,16 +8,28 @@ import { connectDB } from "./db/connection";
 dotenv.config();
 
 const app = express();
+
 const dns = require("dns")
 console.log(dns.getServers());
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
+
 const PORT = Number(process.env.PORT) || 5000;
+
 app.use(
   cors({
     origin: "http://localhost:5173",
   })
 );
+
 app.use(express.json());
+
+const onlineUsers = new Map<
+  string,
+  {
+    userId: string;
+    username: string;
+  }
+>();
 
 app.get("/", (req, res) => {
   res.status(200).json({
@@ -25,7 +37,6 @@ app.get("/", (req, res) => {
     message: "Backend started",
   });
 });
-
 
 app.get("/api/messages", async (req, res) => {
   try {
@@ -46,7 +57,6 @@ app.get("/api/messages", async (req, res) => {
     });
   }
 });
-
 
 app.post("/api/messages", async (req, res) => {
   try {
@@ -93,7 +103,6 @@ async function startServer() {
       console.log(`HTTP server running on http://localhost:${PORT}`);
     });
 
-   
     const wss = new WebSocketServer({
       server,
     });
@@ -101,14 +110,41 @@ async function startServer() {
     wss.on("connection", (socket) => {
       console.log("WebSocket client connected");
 
+      let currentUserId: string | null = null;
+
       socket.on("message", (rawMessage) => {
         try {
           const data = JSON.parse(rawMessage.toString());
 
           console.log("WebSocket received:", data);
 
+         
+          if (data.type === "user_joined") {
+            currentUserId = data.userId;
+
+            onlineUsers.set(data.userId, {
+              userId: data.userId,
+              username: data.username,
+            });
+
+            const users = Array.from(onlineUsers.values());
+
+            console.log("Online users:", users);
+
+            wss.clients.forEach((client) => {
+              if (client.readyState === 1) {
+                client.send(
+                  JSON.stringify({
+                    type: "users_updated",
+                    users,
+                  })
+                );
+              }
+            });
+          }
+
+         
           if (data.type === "new_message") {
-            
             wss.clients.forEach((client) => {
               if (client.readyState === 1) {
                 client.send(
@@ -121,15 +157,32 @@ async function startServer() {
             });
           }
         } catch (error) {
-          console.error(
-            "Invalid WebSocket message:",
-            error
-          );
+          console.error("Invalid WebSocket message:", error);
         }
       });
 
+     
       socket.on("close", () => {
         console.log("WebSocket client disconnected");
+
+        if (currentUserId) {
+          onlineUsers.delete(currentUserId);
+
+          const users = Array.from(onlineUsers.values());
+
+          console.log("Online users:", users);
+
+          wss.clients.forEach((client) => {
+            if (client.readyState === 1) {
+              client.send(
+                JSON.stringify({
+                  type: "users_updated",
+                  users,
+                })
+              );
+            }
+          });
+        }
       });
     });
   } catch (error) {
@@ -138,4 +191,3 @@ async function startServer() {
 }
 
 startServer();
-

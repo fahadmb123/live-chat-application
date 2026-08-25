@@ -17,11 +17,15 @@ function App() {
   const [error, setError] = useState("");
 
   const socketRef = useRef<WebSocket | null>(null);
+  const usernameRef = useRef<string | null>(null);
+
 
   useEffect(() => {
     const loadMessages = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/messages`)
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/messages`
+        );
 
         const data: MessagesResponse = await response.json();
 
@@ -33,29 +37,49 @@ function App() {
         setMessages(data.messages);
       } catch (error) {
         console.error("Failed to load messages:", error);
-        setError("Failed to load messages");
       }
     };
 
     loadMessages();
   }, []);
 
-
+ 
   useEffect(() => {
-    const ws = new WebSocket(import.meta.env.VITE_WS_URL);
+    const ws = new WebSocket(
+      import.meta.env.VITE_WS_URL
+    );
 
     socketRef.current = ws;
 
     ws.onopen = () => {
       console.log("WebSocket connected");
+
+      
+      if (usernameRef.current) {
+        ws.send(
+          JSON.stringify({
+            type: "user_joined",
+            userId: usernameRef.current,
+            username: usernameRef.current,
+          })
+        );
+      }
     };
 
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
 
-        console.log("Received from WebSocket:", data);
+        console.log("WebSocket received:", data);
 
+       
+        if (data.type === "users_updated") {
+          console.log("Updated users:", data.users);
+
+          setUsers(data.users);
+        }
+
+        
         if (data.type === "new_message") {
           setMessages((previousMessages) => [
             ...previousMessages,
@@ -63,7 +87,10 @@ function App() {
           ]);
         }
       } catch (error) {
-        console.error("Invalid WebSocket message:", error);
+        console.error(
+          "Invalid WebSocket message:",
+          error
+        );
       }
     };
 
@@ -81,6 +108,7 @@ function App() {
     };
   }, []);
 
+ 
   const joinChat = (name: string) => {
     const trimmedName = name.trim();
 
@@ -91,25 +119,36 @@ function App() {
 
     setError("");
 
-    const user: User = {
-      userId: trimmedName,
-      username: trimmedName,
-    };
-
+    usernameRef.current = trimmedName;
     setUsername(trimmedName);
 
-    setUsers((previousUsers) => {
-      const alreadyExists = previousUsers.some(
-        (existingUser) =>
-          existingUser.username === trimmedName
-      );
+    const sendJoinMessage = () => {
+      if (
+        socketRef.current &&
+        socketRef.current.readyState === WebSocket.OPEN
+      ) {
+        console.log("Sending user_joined:", trimmedName);
 
-      if (alreadyExists) {
-        return previousUsers;
+        socketRef.current.send(
+          JSON.stringify({
+            type: "user_joined",
+            userId: trimmedName,
+            username: trimmedName,
+          })
+        );
       }
+    };
 
-      return [...previousUsers, user];
-    });
+    if (
+      socketRef.current &&
+      socketRef.current.readyState === WebSocket.OPEN
+    ) {
+      sendJoinMessage();
+    } else {
+      console.log(
+        "WebSocket not ready. Waiting for connection..."
+      );
+    }
   };
 
   if (!username) {

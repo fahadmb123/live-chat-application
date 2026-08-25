@@ -17,7 +17,6 @@ export type Message = {
   createdAt?: string;
 };
 
-
 export type ChatProps = {
   username: string;
   users: User[];
