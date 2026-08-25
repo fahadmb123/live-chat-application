@@ -1,10 +1,12 @@
 import express from "express";
 import dotenv from "dotenv";
 import { Message } from "./models/Message";
+import { connectDB } from "./db/connection";
 
 dotenv.config();
 
 const app = express();
+const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
 
@@ -15,7 +17,6 @@ app.get("/", (req, res) => {
   });
 });
 
-// Get all messages
 app.get("/api/messages", async (req, res) => {
   try {
     const messages = await Message.find().sort({ createdAt: 1 });
@@ -34,4 +35,16 @@ app.get("/api/messages", async (req, res) => {
   }
 });
 
-export default app;
+async function startServer() {
+  try {
+    await connectDB();
+
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error("Server failed to start:", error);
+  }
+}
+
+startServer();
