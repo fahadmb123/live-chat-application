@@ -1,17 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { User, Message } from "./types/app.type";
 import JoinChat from "./components/JoinChat";
 import Chat from "./components/Chat";
-import { chatChannel } from "./services/ably";
-import type { Message as AblyMessage } from "ably";
 import "./App.css";
-
-type RealtimeMessage = {
-  userId: string;
-  username: string;
-  message: string;
-  createdAt: string;
-};
 
 type MessagesResponse = {
   success: boolean;
@@ -25,10 +16,12 @@ function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState("");
 
+  const socketRef = useRef<WebSocket | null>(null);
+
   useEffect(() => {
     const loadMessages = async () => {
       try {
-        const response = await fetch("/api/messages");
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/messages`)
 
         const data: MessagesResponse = await response.json();
 
@@ -47,37 +40,48 @@ function App() {
     loadMessages();
   }, []);
 
- 
+
   useEffect(() => {
-    const handleMessage = (event: AblyMessage) => {
-      if (!event.data) {
-        return;
-      }
+    const ws = new WebSocket(import.meta.env.VITE_WS_URL);
 
-      const data = event.data as RealtimeMessage;
+    socketRef.current = ws;
 
-      const newMessage: Message = {
-        userId: data.userId,
-        username: data.username,
-        message: data.message,
-        createdAt: data.createdAt,
-      };
-
-      setMessages((previousMessages) => [
-        ...previousMessages,
-        newMessage,
-      ]);
+    ws.onopen = () => {
+      console.log("WebSocket connected");
     };
 
-    chatChannel.subscribe("message", handleMessage);
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        console.log("Received from WebSocket:", data);
+
+        if (data.type === "new_message") {
+          setMessages((previousMessages) => [
+            ...previousMessages,
+            data.message,
+          ]);
+        }
+      } catch (error) {
+        console.error("Invalid WebSocket message:", error);
+      }
+    };
+
+    ws.onclose = () => {
+      console.log("WebSocket disconnected");
+    };
+
+    ws.onerror = (error) => {
+      console.error("WebSocket error:", error);
+    };
 
     return () => {
-      chatChannel.unsubscribe("message", handleMessage);
+      ws.close();
+      socketRef.current = null;
     };
   }, []);
 
- 
-  const joinChat = async (name: string) => {
+  const joinChat = (name: string) => {
     const trimmedName = name.trim();
 
     if (!trimmedName) {
@@ -85,42 +89,29 @@ function App() {
       return;
     }
 
-    try {
-      setError("");
+    setError("");
 
-     
-      const user: User = {
-        userId: trimmedName,
-        username: trimmedName,
-      };
+    const user: User = {
+      userId: trimmedName,
+      username: trimmedName,
+    };
 
-      setUsername(trimmedName);
+    setUsername(trimmedName);
 
-      setUsers((previousUsers) => {
-        const alreadyExists = previousUsers.some(
-          (existingUser) =>
-            existingUser.username === trimmedName
-        );
+    setUsers((previousUsers) => {
+      const alreadyExists = previousUsers.some(
+        (existingUser) =>
+          existingUser.username === trimmedName
+      );
 
-        if (alreadyExists) {
-          return previousUsers;
-        }
+      if (alreadyExists) {
+        return previousUsers;
+      }
 
-        return [...previousUsers, user];
-      });
-
-      
-      await chatChannel.publish("user_joined", {
-        userId: trimmedName,
-        username: trimmedName,
-      });
-    } catch (error) {
-      console.error("Failed to join chat:", error);
-      setError("Unable to join chat");
-    }
+      return [...previousUsers, user];
+    });
   };
 
- 
   if (!username) {
     return (
       <JoinChat
@@ -130,13 +121,12 @@ function App() {
     );
   }
 
-  
   return (
     <Chat
       username={username}
       users={users}
       messages={messages}
-      channel={chatChannel}
+      socketRef={socketRef}
     />
   );
 }

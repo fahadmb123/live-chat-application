@@ -3,54 +3,60 @@ import OnlineUsers from "./OnlineUsers";
 import type { ChatProps } from "../types/app.type";
 
 function Chat({
-  channel,
   username,
   users,
   messages,
+  socketRef,
 }: ChatProps) {
-  const sendMessage = async (message: string) => {
-    const trimmedMessage = message.trim();
+    const sendMessage = async (message: string) => {
+        const trimmedMessage = message.trim();
 
-    if (!trimmedMessage) {
-      return;
-    }
+        if (!trimmedMessage) {
+            return;
+        }
 
-    try {
- 
-      const response = await fetch("/api/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId: username,
-          username,
-          message: trimmedMessage,
-        }),
-      });
+        try {
+            const response = await fetch(
+            `${import.meta.env.VITE_API_URL}/api/messages`,
+            {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                userId: username,
+                username,
+                message: trimmedMessage,
+                }),
+            }
+            );
 
-      const data: {
-        success: boolean;
-        message?: string;
-      } = await response.json();
+            const data = await response.json();
 
-      if (!response.ok || !data.success) {
-        console.error(
-          data.message ?? "Failed to save message"
-        );
-        return;
-      }
+            if (!response.ok || !data.success) {
+            console.error(
+                data.message ?? "Failed to save message"
+            );
+            return;
+            }
 
-      await channel.publish("message", {
-        userId: username,
-        username,
-        message: trimmedMessage,
-        createdAt: new Date().toISOString(),
-      });
-    } catch (error) {
-      console.error("Failed to send message:", error);
-    }
-  };
+            console.log("Saved in MongoDB:", data.data);
+
+            if (
+            socketRef.current &&
+            socketRef.current.readyState === WebSocket.OPEN
+            ) {
+            socketRef.current.send(
+                JSON.stringify({
+                type: "new_message",
+                message: data.data,
+                })
+            );
+            }
+        } catch (error) {
+            console.error("Failed to send message:", error);
+        }
+    };
 
   return (
     <div className="chat-page">
