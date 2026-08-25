@@ -13,7 +13,7 @@ function App() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const newSocket = new WebSocket("ws://localhost:8080");
+    const newSocket = new WebSocket(import.meta.env.VITE_WS_URL);
 
     socket.current = newSocket;
 
